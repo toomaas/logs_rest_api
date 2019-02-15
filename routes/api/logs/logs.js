@@ -14,7 +14,7 @@ var stream = fs.createWriteStream("axios_error.txt",{flags:'a'});
   try {
     let result = await axios.post(url, data, config);
     res.send("ok");
-    stream.write(new Date().toISOString()+result+" \n");
+    stream.write(new Date().toISOString()+result.data+" \n");
   } catch (error) {
     res.send("error");
     stream.write("error \n");
