@@ -1,21 +1,13 @@
-const { exec } = require('child_process')
+const express = require('express')
+const app_code = require('./app_code')
 
-module.exports.post = async function (req, res) {
-  console.log(res)
-  res.send('ok')
-}
+const router = express.Router() // get an instance of the express Router
+// https://stackoverflow.com/questions/28305120/differences-between-express-router-and-app-get
 
-module.exports.get = async function (req, res) {
-  exec('elastalert --verbose --rule example_frequency.yaml', (err, stdout, stderr) => {
-    if (err) {
-      // node couldn't execute the command
-      console.log(err)
-      return
-    }
-
-    // the *entire* stdout and stderr (buffered)
-    console.log(`stdout: ${stdout}`)
-    console.log(`stderr: ${stderr}`)
+router.route('/apps',)
+  .get(async (req, res) => {
+    app_code.get(req, res)
   })
-  res.send('cmd exec')
-}
+
+module.exports = router
+
