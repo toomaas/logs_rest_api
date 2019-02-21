@@ -1,4 +1,3 @@
 node_modules
-axios_error.txt
-config.yaml
-example_frequency.yaml
+axios_logs.txt
+nodemon.json
