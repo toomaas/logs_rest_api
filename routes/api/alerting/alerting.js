@@ -36,21 +36,23 @@ module.exports.get = async function (req, res) {
 
 //adds an email to a specific app code so that it can later be alerted in case some error or fatal error ocurrs
 module.exports.post = async function (req, res) {
-    const connection = await oracle_conn()
     //the request must be an array
     if (Array.isArray(req.body)) {
+        const connection = await oracle_conn()
         //for each entry of the array will add an email related to an app code to the db
         for (let row of req.body) {
             try {
                 let is_valid_email = await email_validator.validate(row.email)
                 //checks if the email is valid and if the app_code exists
                 if (is_valid_email && typeof row.app_code !== 'undefined' && row.app_code !== '') {
-                    // valid email
                     var insert_query = `INSERT INTO JALD_ALERTING_EMAILS (APP_CODE,EMAIL) VALUES ('${row.app_code}','${row.email}')`
+                    //inserts in the db
                     let insert_result = await connection.execute(`${insert_query}`)
+                    //if everything went fine then outputs successfull insertion
                     console.log(`${row.email} added to ${row.app_code}`)
                     res.write(`${row.email} added to ${row.app_code} \n`)
                 } else {
+                    //when the validation of email or app_code gives a false
                     console.log(`not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
                     res.write(`not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
                 }
@@ -60,6 +62,6 @@ module.exports.post = async function (req, res) {
                 res.write(`${error_message} \n`)
             }
         }
-        res.end()
     }
+    res.end()
 }
