@@ -10,6 +10,7 @@ module.exports.get = async function (req, res) {
         })
         let emails = await connection.execute(`SELECT EMAIL FROM JALD_ALERTING_EMAILS WHERE APP_CODE LIKE '${req.params.app_code}'`)
         let result = {emails:emails.rows}
+        //returns all emails given a specific app_code
         res.send(result)
     } catch (error) {
         console.log(error)

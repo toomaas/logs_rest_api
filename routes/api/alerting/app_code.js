@@ -10,6 +10,7 @@ module.exports.get = async function (req, res) {
         })
         let app_codes = await connection.execute('SELECT DISTINCT APP_CODE FROM JALD_ALERTING_EMAILS')
         let result = {app_codes:app_codes.rows}
+        //returns all app_codes 
         res.send(result)
     } catch (error) {
         console.log(error)
