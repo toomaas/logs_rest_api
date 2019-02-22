@@ -53,11 +53,11 @@ module.exports.post = async function (req, res) {
                     res.write(`${row.email} added to ${row.app_code} \n`)
                 } else {
                     //when the validation of email or app_code gives a false
-                    console.log(`not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
-                    res.write(`not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
+                    console.log(`ERROR: not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
+                    res.write(`ERROR: not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
                 }
             } catch (error) {
-                let error_message = `An error ocurred: ${error.message} on the following query: ${insert_query}`;
+                let error_message = `ERROR: ${error.message} on the following query: ${insert_query}`;
                 console.log(error_message)
                 res.write(`${error_message} \n`)
             }
@@ -68,5 +68,32 @@ module.exports.post = async function (req, res) {
 
 //removes an email from a specific app code
 module.exports.delete = async function (req, res) {
-   res.send('deleting')
+    //the request must be an array
+    if (Array.isArray(req.body)) {
+        const connection = await oracle_conn()
+        //for each entry of the array will delete the email related to an app code on the db
+        for (let row of req.body) {
+            try {
+                let is_valid_email = await email_validator.validate(row.email)
+                //checks if the email is valid and if the app_code exists
+                if (is_valid_email && typeof row.app_code !== 'undefined' && row.app_code !== '') {
+                    var delete_query = `DELETE FROM JALD_ALERTING_EMAILS WHERE APP_CODE = '${row.app_code}' AND EMAIL = '${row.email}'`
+                    //inserts in the db
+                    let delete_result = await connection.execute(`${delete_query}`)
+                    //if everything went fine then outputs successfull insertion
+                    console.log(`${row.email} deleted from ${row.app_code}`)
+                    res.write(`${row.email} deleted from ${row.app_code} \n`)
+                } else {
+                    //when the validation of email or app_code gives a false
+                    console.log(`ERROR: not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
+                    res.write(`ERROR: not a valid input {app_code:'${row.app_code}',email:'${row.email}'} \n`)
+                }
+            } catch (error) {
+                let error_message = `ERROR: ${error.message} on the following query: ${delete_query}`;
+                console.log(error_message)
+                res.write(`${error_message} \n`)
+            }
+        }
+    }
+    res.end()
 }
