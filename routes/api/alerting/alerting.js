@@ -65,3 +65,8 @@ module.exports.post = async function (req, res) {
     }
     res.end()
 }
+
+//removes an email from a specific app code
+module.exports.delete = async function (req, res) {
+   res.send('deleting')
+}
