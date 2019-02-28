@@ -12,11 +12,19 @@ module.exports.post = async function (req, res) {
   }
   let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
   try {
-    let result = await axios.post(url, data, config)
+    let result = axios.post(url, data, config)
     res.send('ok')
     stream.write(`${new Date().toISOString()} ${result.data}\n`)
   } catch (error) {
     res.send('error')
     stream.write(`${new Date().toISOString()} error\n`)
+  }
+}
+
+module.exports.get = async function (req, res) {
+  try {
+    res.send('ok')
+  } catch (error) {
+    res.send('error')
   }
 }
