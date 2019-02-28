@@ -23,7 +23,7 @@ module.exports = `
           created_by: String!
         }
         "the optional inputs that can be inserted"
-        input SearchInput{
+        input LogsSearchInput{
           application_code: String
           log_level: String
           source_system: String
@@ -35,6 +35,6 @@ module.exports = `
 
         type Query {
           "Can search all logs or search with optional filters."
-          logsSearch(searchInput : SearchInput) : [Log]
+          logsSearch(searchInput : LogsSearchInput) : [Log]
         }
 `
