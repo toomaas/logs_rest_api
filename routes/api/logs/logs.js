@@ -20,11 +20,3 @@ module.exports.post = async function (req, res) {
     stream.write(`${new Date().toISOString()} error\n`)
   }
 }
-
-module.exports.get = async function (req, res) {
-  try {
-    res.send('ok')
-  } catch (error) {
-    res.send('error')
-  }
-}
