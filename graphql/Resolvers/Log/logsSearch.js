@@ -30,6 +30,7 @@ module.exports = async function (args) {
             argsBuilder = await [...argsBuilder, { "match": { "log_level": `${args.log_level}` } }]
         if (args.source_system)
             argsBuilder = await [...argsBuilder, { "match": { "source_system": `${args.source_system}` } }]
+        if (args.log_guid) argsBuilder = await [...argsBuilder, { "match": { "log_guid": `${args.log_guid}` } }]
         // if there are dates in the arguments then the range query will be constructed
         if (args.created_at_gte || args.created_at_lte) {
             // these are the formats allowed. dates will be parsed bases on the specified formats. 
@@ -43,7 +44,7 @@ module.exports = async function (args) {
         // "bool:must" means that all these filters must occur for the log to be a match
         queryBuilder = { "bool": { "must": argsBuilder } }
     }
-    // console.log('querybuildr', JSON.stringify(queryBuilder))
+    console.log('graphql querybuilder', JSON.stringify(queryBuilder))
     //makes an elasticsearch query, returning documents that match the query
     var conn = await elasticsearch_connection() // makes the connection to elaticsearch
     let elasticResponse = await conn.search({
@@ -52,7 +53,7 @@ module.exports = async function (args) {
         body: {
             "query": queryBuilder,
             "_source": { "includes": include_fields },
-            "size": "50",
+            "size": "500",
             "sort": { "created_at": { "order": "asc" } }
         }
     })
