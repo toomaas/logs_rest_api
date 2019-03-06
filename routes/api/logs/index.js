@@ -59,7 +59,7 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
     })
     var response = [] // initialization of the graphql response
     elasticResponse.hits.hits.forEach(async (row) => {
-        row._source._id = row._id   // putting the elasticserach unique _id
+        // row._source._id = row._id   // putting the elasticserach unique _id
         response = [...response, row._source]
     })
     res.send({ 'hits': elasticResponse.hits.total, 'response': response })

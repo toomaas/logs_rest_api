@@ -1,8 +1,6 @@
 module.exports = `
         "A type that describes the log."
         type Log {
-            "the elasticsearch unique id of this entry"
-          _id: ID!
             "function where the log originated from"
           source_function: String!
            "system can be oracle, sap, sharepoint,..."

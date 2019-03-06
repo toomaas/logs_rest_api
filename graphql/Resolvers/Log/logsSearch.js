@@ -54,10 +54,8 @@ module.exports = async function (args) {
             "sort": { "created_at": { "order": "asc" } }
         }
     })
-    console.log(elasticResponse)
     var graphQLResponse = [] // initialization of the graphql response
     elasticResponse.hits.hits.forEach(async (row) => {
-        row._source._id = row._id   // putting the elasticserach unique _id
         graphQLResponse = [...graphQLResponse, row._source]
     })
     return graphQLResponse
