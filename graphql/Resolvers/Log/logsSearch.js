@@ -24,13 +24,10 @@ module.exports = async function (args) {
     } else {
         //if there are arguments, then the query must be constructed based on the argument
         let argsBuilder = []
-        if (args.application_code)
-            argsBuilder = await [...argsBuilder, { "match": { "application_code": `${args.application_code}` } }]
-        if (args.log_level)
-            argsBuilder = await [...argsBuilder, { "match": { "log_level": `${args.log_level}` } }]
-        if (args.source_system)
-            argsBuilder = await [...argsBuilder, { "match": { "source_system": `${args.source_system}` } }]
-        if (args.log_guid) argsBuilder = await [...argsBuilder, { "match": { "log_guid": `${args.log_guid}` } }]
+        if (args.application_code) argsBuilder = await [...argsBuilder, { "match": { "application_code": `${args.application_code}` } }]    // app code
+        if (args.log_level) argsBuilder = await [...argsBuilder, { "match": { "log_level": `${args.log_level}` } }]                         // log level
+        if (args.source_system) argsBuilder = await [...argsBuilder, { "match": { "source_system": `${args.source_system}` } }]             // source system
+        if (args.log_guid) argsBuilder = await [...argsBuilder, { "match": { "log_guid": `${args.log_guid}` } }]                            // log guid
         // if there are dates in the arguments then the range query will be constructed
         if (args.created_at_gte || args.created_at_lte) {
             // these are the formats allowed. dates will be parsed bases on the specified formats. 
@@ -57,6 +54,7 @@ module.exports = async function (args) {
             "sort": { "created_at": { "order": "asc" } }
         }
     })
+    console.log(elasticResponse)
     var graphQLResponse = [] // initialization of the graphql response
     elasticResponse.hits.hits.forEach(async (row) => {
         row._source._id = row._id   // putting the elasticserach unique _id

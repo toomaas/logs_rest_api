@@ -32,7 +32,7 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
     if (Object.keys(req.query).length !== 0) {
         if (req.query.log_level)
             argsBuilder = await [...argsBuilder, { "match": { "log_level": `${req.query.log_level}` } }]
-        if(req.query.log_guid) argsBuilder = await [...argsBuilder, { "match": { "log_guid": `${req.query.log_guid}` } }]
+        if (req.query.log_guid) argsBuilder = await [...argsBuilder, { "match": { "log_guid": `${req.query.log_guid}` } }]
         // if there are dates in the arguments then the range query will be constructed
         if (req.query.created_at_gte || req.query.created_at_lte) {
             // these are the formats allowed. dates will be parsed bases on the specified formats. 
@@ -57,15 +57,32 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
             "sort": { "created_at": { "order": "asc" } }
         }
     })
-    res.json({ 'params': req.params, 'query string': req.query , 'response':elasticResponse.hits.hits})
+    var response = [] // initialization of the graphql response
+    elasticResponse.hits.hits.forEach(async (row) => {
+        row._source._id = row._id   // putting the elasticserach unique _id
+        response = [...response, row._source]
+    })
+    res.send({ 'hits': elasticResponse.hits.total, 'response': response })
+})
+
+router.route('/').post(async (req, res) => {
+    let data = req.body
+    let url = 'http://10.11.112.38:5000'
+    let config = {
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        maxContentLength: 31457280 // maxlength 30 mb
+    }
+    let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
+    try {
+        let result = axios.post(url, data, config)
+        res.send('ok')
+        stream.write(`${new Date().toISOString()} ${result.data}\n`)
+    } catch (error) {
+        res.send('error')
+        stream.write(`${new Date().toISOString()} error\n`)
+    }
 })
 
 module.exports = router
-
-//     var graphQLResponse = [] // initialization of the graphql response
-//     elasticResponse.hits.hits.forEach(async (row) => {
-//         row._source._id = row._id   // putting the elasticserach unique _id
-//         graphQLResponse = [...graphQLResponse, row._source]
-//     })
-//     return graphQLResponse
-// }

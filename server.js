@@ -3,6 +3,7 @@ const app = express() // define app using express
 const bodyParser = require('body-parser')
 const pretty = require('express-prettify')
 const process = require('process')
+const cors = require('cors')
 
 const api = require('./routes/api')
 
@@ -19,6 +20,7 @@ const schema = graphql.buildSchema(schemaTypes);
 app.use(bodyParser.urlencoded({ parameterLimit: 100000, limit: '40mb', extended: true }))
 app.use(bodyParser.json({ limit: '40mb', extended: true }))
 app.use(pretty({ query: 'pretty' })) // in the query string use "pretty" to pretty print json
+app.use(cors())
 
 //port to use. this should be a env var or an argument when starting the app
 const PORT = 8080
