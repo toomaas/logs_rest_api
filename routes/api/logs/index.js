@@ -28,7 +28,9 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
         req.query[key] += ""
     }
     // maximum number of logs in the response
-    let limit = req.query.limit || '500'
+    let limit
+    if(req.query.limit && req.query.limit.match("^[0-9]+$")) limit = req.query.limit
+    else limit = '500'
     argsBuilder = [...argsBuilder, { "match": { "source_system": `${req.params.source_system}` } }, { "match": { "application_code": `${req.params.app_code}` } }]
     // console.log(Object.keys(req.query).length)
     if (Object.keys(req.query).length !== 0) {
@@ -60,6 +62,10 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
                 "sort": { "created_at": { "order": "asc" } }
             }
         })
+        if(elasticResponse.hits.total <= 0){
+            res.status(404).send({error: 'No logs found matching the Request parameters'})
+            return
+        }
         var response = [] // initialization of the graphql response
         elasticResponse.hits.hits.forEach(async (row) => {
             // row._source._id = row._id   // putting the elasticserach unique _id
@@ -71,7 +77,6 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
         res.send({ error: jsn.error.failed_shards[0].reason.caused_by.reason })
         console.log({ error: jsn.error.failed_shards[0] })
     }
-
 })
 
 router.route('/').post(async (req, res) => {
