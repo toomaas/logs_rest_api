@@ -27,6 +27,8 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
     for (const key in req.query) {
         req.query[key] += ""
     }
+    // maximum number of logs in the response
+    let limit = req.query.limit || '500'
     argsBuilder = [...argsBuilder, { "match": { "source_system": `${req.params.source_system}` } }, { "match": { "application_code": `${req.params.app_code}` } }]
     // console.log(Object.keys(req.query).length)
     if (Object.keys(req.query).length !== 0) {
@@ -47,40 +49,47 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
     queryBuilder = { "bool": { "must": argsBuilder } }
     console.log('rest api querybuilder', JSON.stringify(queryBuilder))
     let conn = await elasticsearch_connection() // makes the connection to elaticsearch
-    let elasticResponse = await conn.search({
-        index: 'logstash*',
-        type: 'doc',
-        body: {
-            "query": queryBuilder,
-            "_source": { "includes": include_fields },
-            "size": "500",
-            "sort": { "created_at": { "order": "asc" } }
-        }
-    })
-    var response = [] // initialization of the graphql response
-    elasticResponse.hits.hits.forEach(async (row) => {
-        // row._source._id = row._id   // putting the elasticserach unique _id
-        response = [...response, row._source]
-    })
-    res.send({ 'hits': elasticResponse.hits.total, 'response': response })
+    try {
+        let elasticResponse = await conn.search({
+            index: 'logstash*',
+            type: 'doc',
+            body: {
+                "query": queryBuilder,
+                "_source": { "includes": include_fields },
+                "size": limit,
+                "sort": { "created_at": { "order": "asc" } }
+            }
+        })
+        var response = [] // initialization of the graphql response
+        elasticResponse.hits.hits.forEach(async (row) => {
+            // row._source._id = row._id   // putting the elasticserach unique _id
+            response = [...response, row._source]
+        })
+        res.send({ 'total hits': elasticResponse.hits.total, 'data': response })
+    } catch (error) {
+        let jsn = JSON.parse(error.response)
+        res.send({ error: jsn.error.failed_shards[0].reason.caused_by.reason })
+        console.log({ error: jsn.error.failed_shards[0] })
+    }
+
 })
 
 router.route('/').post(async (req, res) => {
-    let data = req.body
-    let url = 'http://10.11.112.38:5000'
-    let config = {
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        maxContentLength: 31457280 // maxlength 30 mb
-    }
-    let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
     try {
-        let result = axios.post(url, data, config)
-        res.send('ok')
+        let data = req.body
+        let url = 'http://10.11.112.38:5000'
+        let config = {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            maxContentLength: 31457280 // maxlength 30 mb
+        }
+        let result = await axios.post(url, data, config)
+        res.send({ data: result.data })
+        let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
         stream.write(`${new Date().toISOString()} ${result.data}\n`)
     } catch (error) {
-        res.send('error')
+        res.send({ error: error })
         stream.write(`${new Date().toISOString()} error\n`)
     }
 })

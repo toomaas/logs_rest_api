@@ -22,17 +22,19 @@ module.exports = `
         }
           "the optional inputs that can be inserted"
         input LogsSearchInput{
+            "system can be oracle, sap, sharepoint,..."
+          source_system: String!
             "application code (ex: MAT, MZE, LDS)"
-          application_code: String
+          application_code: String!
             "INFO, ERROR, FATAL_ERROR, DEBUG, WARNING"
           log_level: String
-            "system can be oracle, sap, sharepoint,..."
-          source_system: String
             "created at must be greater than or equal to... date format: YYYY-MM-DD"
           created_at_gte: String
             "created at must be less than or equal to... date format: YYYY-MM-DD"
           created_at_lte: String
           log_guid: String
+            "max number of logs in the response. defaults to 500 if not defined"
+          limit: Int
         }
 
         type Query {

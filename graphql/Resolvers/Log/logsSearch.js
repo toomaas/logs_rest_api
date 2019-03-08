@@ -15,7 +15,8 @@ const include_fields = [
 ]
 
 module.exports = async function (args) {
-    let queryBuilder = {}   // initialization of the query as an object
+        let queryBuilder = {}   // initialization of the query as an object
+        let limit = '500'
     if (typeof args === 'undefined') {
         // when no arguments are passed, a full query will be made
         queryBuilder = await {
@@ -23,6 +24,7 @@ module.exports = async function (args) {
         }
     } else {
         //if there are arguments, then the query must be constructed based on the argument
+        if(args.limit) limit = args.limit+''
         let argsBuilder = []
         if (args.application_code) argsBuilder = await [...argsBuilder, { "match": { "application_code": `${args.application_code}` } }]    // app code
         if (args.log_level) argsBuilder = await [...argsBuilder, { "match": { "log_level": `${args.log_level}` } }]                         // log level
@@ -41,6 +43,7 @@ module.exports = async function (args) {
         // "bool:must" means that all these filters must occur for the log to be a match
         queryBuilder = { "bool": { "must": argsBuilder } }
     }
+    
     console.log('graphql querybuilder', JSON.stringify(queryBuilder))
     //makes an elasticsearch query, returning documents that match the query
     var conn = await elasticsearch_connection() // makes the connection to elaticsearch
@@ -50,7 +53,7 @@ module.exports = async function (args) {
         body: {
             "query": queryBuilder,
             "_source": { "includes": include_fields },
-            "size": "500",
+            "size": limit,
             "sort": { "created_at": { "order": "asc" } }
         }
     })

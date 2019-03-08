@@ -5,5 +5,4 @@ const resolvers = [
   LogResolver
 ];
 
-
 module.exports = mergegraphql.mergeResolvers(resolvers)
