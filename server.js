@@ -18,10 +18,11 @@ app.use(bodyParser.urlencoded({ parameterLimit: 100000, limit: '40mb', extended:
 app.use(bodyParser.json({ limit: '40mb', extended: true }))
 app.use(pretty({ query: 'pretty' })) // in the query string use "pretty" to pretty print json
 app.use(cors())
-
 //handle unexpected errors and sends the error to the client
 app.use(function (error, req, res, next) {
   if (error) {
+    console.log(error)
+    res.setHeader('Access-Control-Allow-Origin', '*'); // https://wanago.io/2018/11/05/cors-cross-origin-resource-sharing/
     res.status(400).send({error:JSON.stringify(error)})
   } else {
     next();
