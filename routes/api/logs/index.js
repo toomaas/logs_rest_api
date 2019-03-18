@@ -3,8 +3,8 @@ const express = require('express')
 const router = express.Router() // get an instance of the express Router
 const axios = require('axios')
 const fs = require('fs')
-const validator = require('validator')
 const elasticsearch_connection = require(`../../../elasticsearch/connection`)
+const Joi = require('joi')
 
 // fields to include in the "_source" response object
 const include_fields = [
