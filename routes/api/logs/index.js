@@ -4,8 +4,10 @@ const router = express.Router() // get an instance of the express Router
 const axios = require('axios')
 const fs = require('fs')
 const elasticsearch_connection = require(`../../../elasticsearch/connection`)
-const Joi = require('joi')
-
+const BaseJoi = require('joi')
+//joi-date-extensions are Joi extensions for extra date rules, such as .format(). uses moment.js format
+const JoiDateExtension = require('joi-date-extensions')
+const Joi = BaseJoi.extend(JoiDateExtension)
 // fields to include in the "_source" response object
 const include_fields = [
     "source_system",
@@ -81,21 +83,41 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
 
 router.route('/').post(async (req, res) => {
     try {
-        let data = req.body
-        let url = 'http://10.11.112.38:5000'
+        // Joi schema used to validate the input
+        const schema = Joi.array().items(Joi.object().keys({
+            source_system: Joi.string().alphanum().min(3).max(30).required(),
+            application_code: Joi.string().required(),
+            log_guid: Joi.string().required(),
+            log_level: Joi.string().required(),
+            source_function: Joi.string().required(),
+            log_message: Joi.string().allow('').required(),
+            application_context: Joi.string().allow('').required(),
+            call_stack: Joi.string().allow('').required(),
+            created_by: Joi.string().required(),
+            created_at: Joi.date().format('YYYY-MM-DD HH:mm:ss').raw().required()
+        }));
+        let data = req.body // request body
+        let url = 'http://10.11.112.38:5000'    // logstash url
         let config = {
             headers: {
                 'Content-Type': 'application/json'
             },
             maxContentLength: 31457280 // maxlength 30 mb
         }
-        let result = await axios.post(url, data, config)
+        // will validate the array of json logs with the joi schema.
+        // allowUnknown allows object to contain unknown keys wich are ignored
+        let validationResult = await Joi.validate(data,schema,{allowUnknown : false });
+        // validationResult contains the original array of objects (if the validation went ok).
+        let result = await axios.post(url, validationResult, config)
         res.send({ data: result.data })
         let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
         stream.write(`${new Date().toISOString()} ${result.data}\n`)
+        console.log(result)
     } catch (error) {
         res.send({ error: error })
-        stream.write(`${new Date().toISOString()} error\n`)
+        console.log(error)
+        let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
+        stream.write(`${new Date().toISOString()} ${JSON.stringify(error)}\n`)
     }
 })
 
