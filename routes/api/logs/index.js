@@ -8,7 +8,7 @@ const BaseJoi = require('joi')
 //joi-date-extensions are Joi extensions for extra date rules, such as .format(). uses moment.js format
 const JoiDateExtension = require('joi-date-extensions')
 const Joi = BaseJoi.extend(JoiDateExtension)
-// fields to include in the "_source" response object
+// fields to include in the "_source" response object. this is used in the GET route
 const include_fields = [
     "source_system",
     "application_code",
@@ -31,7 +31,7 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
     }
     // maximum number of logs in the response
     let limit
-    if(req.query.limit && req.query.limit.match("^[0-9]+$")) limit = req.query.limit
+    if (req.query.limit && req.query.limit.match("^[0-9]+$")) limit = req.query.limit
     else limit = '500'
     argsBuilder = [...argsBuilder, { "match": { "source_system": `${req.params.source_system}` } }, { "match": { "application_code": `${req.params.app_code}` } }]
     // console.log(Object.keys(req.query).length)
@@ -64,8 +64,8 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
                 "sort": { "created_at": { "order": "asc" } }
             }
         })
-        if(elasticResponse.hits.total <= 0){
-            res.status(404).send({error: 'No logs found matching the Request parameters'})
+        if (elasticResponse.hits.total <= 0) {
+            res.status(404).send({ error: 'No logs found matching the Request parameters' })
             return
         }
         var response = [] // initialization of the graphql response
@@ -85,8 +85,8 @@ router.route('/').post(async (req, res) => {
     try {
         // Joi schema used to validate the input
         const schema = Joi.array().items(Joi.object().keys({
-            source_system: Joi.string().alphanum().min(3).max(30).required(),
-            application_code: Joi.string().required(),
+            source_system: Joi.string().regex(/^[a-zA-Z]*$/).required(),    // allows only letters with no spaces in between 
+            application_code: Joi.string().regex(/^[a-zA-Z]*$/).required(),
             log_guid: Joi.string().required(),
             log_level: Joi.string().required(),
             source_function: Joi.string().required(),
@@ -94,7 +94,7 @@ router.route('/').post(async (req, res) => {
             application_context: Joi.string().allow('').required(),
             call_stack: Joi.string().allow('').required(),
             created_by: Joi.string().required(),
-            created_at: Joi.date().format('YYYY-MM-DD HH:mm:ss').raw().required()
+            created_at: Joi.date().format('YYYY-MM-DD HH:mm:ss').raw().required()   //uses the moment.js dates format                                                
         }));
         let data = req.body // request body
         let url = 'http://10.11.112.38:5000'    // logstash url
@@ -105,17 +105,17 @@ router.route('/').post(async (req, res) => {
             maxContentLength: 31457280 // maxlength 30 mb
         }
         // will validate the array of json logs with the joi schema.
-        // allowUnknown allows object to contain unknown keys wich are ignored
-        let validationResult = await Joi.validate(data,schema,{allowUnknown : false });
-        // validationResult contains the original array of objects (if the validation went ok).
-        let result = await axios.post(url, validationResult, config)
+        // allowUnknown:false doesnt allow the object to contain unknown keys
+        let joiValidatedResult = await Joi.validate(data, schema, { allowUnknown: false })   // joiValidatedResult contains the validated original array of objects (if the validation went ok).
+        let result = await axios.post(url, joiValidatedResult, config)
+        //if the post to logstash went ok, then will return an 'ok message' 
         res.send({ data: result.data })
+        //logs in a txt file the date and response of the post request to logstash
         let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
         stream.write(`${new Date().toISOString()} ${result.data}\n`)
-        console.log(result)
     } catch (error) {
         res.send({ error: error })
-        console.log(error)
+        //logs in a txt file the date and response of the post request to logstash
         let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
         stream.write(`${new Date().toISOString()} ${JSON.stringify(error)}\n`)
     }
