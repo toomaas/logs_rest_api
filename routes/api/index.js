@@ -7,7 +7,7 @@ const router = express.Router() // get an instance of the express Router
 
 // middleware (always goes through here)
 router.use(async function timeLog (req, res, next) {
-  console.log('pid:', process.pid, 'Request:', req.method, req.url, 'from', req.ip, 'Time:', Date.now())
+  console.log('pid:', process.pid, 'Request made:', req.method, req.url, 'from', req.ip, 'Time:', Date.now())
   next()
 })
 
