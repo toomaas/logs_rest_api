@@ -44,7 +44,7 @@ module.exports = async function (args) {
         queryBuilder = { "bool": { "must": argsBuilder } }
     }
     
-    console.log('graphql querybuilder', JSON.stringify(queryBuilder))
+    //console.log('graphql querybuilder', JSON.stringify(queryBuilder))
     //makes an elasticsearch query, returning documents that match the query
     var conn = await elasticsearch_connection() // makes the connection to elaticsearch
     let elasticResponse = await conn.search({

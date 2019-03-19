@@ -51,7 +51,6 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
         }
     }
     queryBuilder = { "bool": { "must": argsBuilder } }
-    console.log('rest api querybuilder', JSON.stringify(queryBuilder))
     let conn = await elasticsearch_connection() // makes the connection to elaticsearch
     try {
         let elasticResponse = await conn.search({
@@ -76,8 +75,7 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
         res.send({ 'total hits': elasticResponse.hits.total, 'data': response })
     } catch (error) {
         let jsn = JSON.parse(error.response)
-        res.send({ error: jsn.error.failed_shards[0].reason.caused_by.reason })
-        console.log({ error: jsn.error.failed_shards[0] })
+        res.status(400).send({ error: jsn.error.failed_shards[0].reason.caused_by.reason })
     }
 })
 
@@ -99,6 +97,7 @@ router.route('/').post(async (req, res) => {
         let data = req.body // request body
         let url = 'http://10.11.112.38:5000'    // logstash url
         let config = {
+            timeout: 5000,
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -107,17 +106,23 @@ router.route('/').post(async (req, res) => {
         // will validate the array of json logs with the joi schema.
         // allowUnknown:false doesnt allow the object to contain unknown keys
         let joiValidatedResult = await Joi.validate(data, schema, { allowUnknown: false })   // joiValidatedResult contains the validated original array of objects (if the validation went ok).
-        let result = await axios.post(url, joiValidatedResult, config)
+        let result = await axios.post(url, joiValidatedResult, config).catch(error => {throw {name:"Error with the logstash endpoint",details:error.message}})
         //if the post to logstash went ok, then will return an 'ok message' 
-        res.send({ data: result.data })
+        res.send({ result: result.data })
         //logs in a txt file the date and response of the post request to logstash
         let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
         stream.write(`${new Date().toISOString()} ${result.data}\n`)
     } catch (error) {
-        res.send({ error: error })
+        if(typeof error.details === "object"){
+            res.status(400)
+            error.details = error.details[0].message  //when the error is from the validator, goes to the object and gets the message to be presented in the response 
+        }
+        else if (error.name && error.name === "Error with the logstash endpoint"){res.status(500)}
+        else res.status(501) 
         //logs in a txt file the date and response of the post request to logstash
         let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
-        stream.write(`${new Date().toISOString()} ${JSON.stringify(error)}\n`)
+        stream.write(`${new Date().toISOString()} ${JSON.stringify(error.details)}\n`)
+        res.send({ error: { name: error.name, details: error.details} })
     }
 })
 
