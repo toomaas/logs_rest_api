@@ -21,7 +21,7 @@ app.use(cors())
 //handle unexpected errors and sends the error to the client
 app.use(function (error, req, res, next) {
   if (error) {
-    res.setHeader('Access-Control-Allow-Origin', '*'); // https://wanago.io/2018/11/05/cors-cross-origin-resource-sharing/. swagger didnt receive a response without this header
+    res.setHeader('Access-Control-Allow-Origin', '*'); // https://wanago.io/2018/11/05/cors-cross-origin-resource-sharing/. swagger didnt receive a 400 response without this header
     res.status(400).send({error:JSON.stringify(error)})
   } else {
     next();
@@ -30,7 +30,7 @@ app.use(function (error, req, res, next) {
 
 //port to use. this should be a env var or an argument when starting the app
 const PORT = 8080
-// ROUTE--------------------------------
+// ROUTES--------------------------------
 app.use('/api', api)
 app.use('/graphql',graphQLHttp({
   schema:schema,
