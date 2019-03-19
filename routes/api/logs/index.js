@@ -2,7 +2,7 @@
 const express = require('express')
 const router = express.Router() // get an instance of the express Router
 const axios = require('axios')
-const fs = require('fs')
+// const fs = require('fs')
 const elasticsearch_connection = require(`../../../elasticsearch/connection`)
 const BaseJoi = require('joi')
 //joi-date-extensions are Joi extensions for extra date rules, such as .format(). uses moment.js format
@@ -63,10 +63,6 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
                 "sort": { "created_at": { "order": "asc" } }
             }
         })
-        if (elasticResponse.hits.total <= 0) {
-            res.status(404).send({ error: 'No logs found matching the Request parameters' })
-            return
-        }
         var response = [] // initialization of the graphql response
         elasticResponse.hits.hits.forEach(async (row) => {
             // row._source._id = row._id   // putting the elasticserach unique _id
@@ -75,7 +71,8 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
         res.send({ 'total hits': elasticResponse.hits.total, 'data': response })
     } catch (error) {
         let jsn = JSON.parse(error.response)
-        res.status(400).send({ error: jsn.error.failed_shards[0].reason.caused_by.reason })
+        //sends a 400 status code response with the details of the error, wich originated from elasticsearch
+        res.status(400).send({ error:{name:jsn.error.root_cause[0].type,details:`${jsn.error.root_cause[0].reason}.${jsn.error.failed_shards[0].reason.caused_by.reason}`}})
     }
 })
 
@@ -109,9 +106,9 @@ router.route('/').post(async (req, res) => {
         let result = await axios.post(url, joiValidatedResult, config).catch(error => {throw {name:"Error with the logstash endpoint",details:error.message}})
         //if the post to logstash went ok, then will return an 'ok message' 
         res.send({ result: result.data })
-        //logs in a txt file the date and response of the post request to logstash
-        let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
-        stream.write(`${new Date().toISOString()} ${result.data}\n`)
+        // //logs in a txt file the date and response of the post request to logstash
+        // let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
+        // stream.write(`${new Date().toISOString()} ${result.data}\n`)
     } catch (error) {
         if(typeof error.details === "object"){
             res.status(400)
@@ -119,9 +116,9 @@ router.route('/').post(async (req, res) => {
         }
         else if (error.name && error.name === "Error with the logstash endpoint"){res.status(500)}
         else res.status(501) 
-        //logs in a txt file the date and response of the post request to logstash
-        let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
-        stream.write(`${new Date().toISOString()} ${JSON.stringify(error.details)}\n`)
+        // //logs in a txt file the date and response of the post request to logstash
+        // let stream = fs.createWriteStream('axios_logs.txt', { flags: 'a' })
+        // stream.write(`${new Date().toISOString()} ${JSON.stringify(error.details)}\n`)
         res.send({ error: { name: error.name, details: error.details} })
     }
 })

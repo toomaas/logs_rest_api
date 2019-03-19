@@ -22,7 +22,8 @@ app.use(cors())
 app.use(function (error, req, res, next) {
   if (error) {
     res.setHeader('Access-Control-Allow-Origin', '*'); // https://wanago.io/2018/11/05/cors-cross-origin-resource-sharing/. swagger didnt receive a 400 response without this header
-    res.status(400).send({error:JSON.stringify(error)})
+    if (error.type && error.message) res.status(400).send({error:{name:error.type,details:error.message}})
+    else res.status(400).send({error:{name:"uncaughterror",details:JSON.stringify(error)}})
   } else {
     next();
   }

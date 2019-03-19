@@ -1,7 +1,6 @@
 const express = require('express')
 const logs = require('./logs')
 
-
 const router = express.Router() // get an instance of the express Router
 // https://stackoverflow.com/questions/28305120/differences-between-express-router-and-app-get
 
@@ -11,7 +10,7 @@ router.use(async function timeLog (req, res, next) {
   next()
 })
 
-    
+// using the router for all endpoints with /api/logs/....
 router.use('/logs', logs)
 
 module.exports = router
