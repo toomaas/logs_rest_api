@@ -29,19 +29,22 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
     for (const key in req.query) {
         req.query[key] += ""
     }
-    // maximum number of logs in the response
-    let limit
-    if (req.query.limit && req.query.limit.match("^[0-9]+$")) limit = req.query.limit
-    else limit = '500'
+    // maximum number of logs in the response.
+    let size = '500'
+    let from = '0'
     argsBuilder = [...argsBuilder, { "match": { "source_system": `${req.params.source_system}` } }, { "match": { "application_code": `${req.params.app_code}` } }]
     // console.log(Object.keys(req.query).length)
     if (Object.keys(req.query).length !== 0) {
+        //the from parameter defines the offset from the first result you want to fetch
+        if (req.query.from && req.query.from.match("^[0-9]+$")) from = req.query.from
+        // the size parameter is the max hits to be returned must be a string with only numbers. defaults to 500 if there was no imput or not a valid number
+        if (req.query.size && req.query.size.match("^[0-9]+$")) size = req.query.size
         if (req.query.log_level)
             argsBuilder = await [...argsBuilder, { "match": { "log_level": `${req.query.log_level}` } }]
         if (req.query.log_guid) argsBuilder = await [...argsBuilder, { "match": { "log_guid": `${req.query.log_guid}` } }]
         // if there are dates in the arguments then the range query will be constructed
         if (req.query.created_at_gte || req.query.created_at_lte) {
-            // these are the formats allowed. dates will be parsed bases on the specified formats. 
+            // these are the formats allowed. dates will be parsed based on the specified formats. 
             // If a date with a wrong format is sent, an error will ocurr from the elasticsearch database
             let created_at = { "format": "yyyy-MM-dd" }
             if (req.query.created_at_gte) created_at['gte'] = `${req.query.created_at_gte}`
@@ -59,7 +62,8 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
             body: {
                 "query": queryBuilder,
                 "_source": { "includes": include_fields },
-                "size": limit,
+                "from": from,
+                "size": size,
                 "sort": { "created_at": { "order": "asc" } }
             }
         })

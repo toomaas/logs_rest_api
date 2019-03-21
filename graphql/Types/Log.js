@@ -33,8 +33,10 @@ module.exports = `
             "created at must be less than or equal to... date format: YYYY-MM-DD"
           created_at_lte: String
           log_guid: String
+            "the offset from the first result you want to fetch. defaults to 0"
+          from: Int
             "max number of logs in the response. defaults to 500 if not defined"
-          limit: Int
+          size: Int
         }
 
         type Query {
