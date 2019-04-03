@@ -96,7 +96,8 @@ router.route('/').post(async (req, res) => {
             created_at: Joi.date().format('YYYY-MM-DD HH:mm:ss').raw().required()   //uses the moment.js dates format                                                
         }));
         let data = req.body // request body
-        let url = 'http://10.11.112.38:5000'    // logstash url
+        // let url = 'http://10.11.112.38:5000'    // logstash url
+        let url = 'http://logstashcustom-log-node.apps.amsint.com'    // logstash url
         let config = {
             timeout: 5000,
             headers: {
