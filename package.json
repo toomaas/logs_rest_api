@@ -19,6 +19,7 @@
     "email-validator": "^2.0.4",
     "express": "^4.16.4",
     "express-graphql": "^0.7.1",
+    "express-ip": "^1.0.3",
     "express-prettify": "^0.1.1",
     "graphql": "^14.1.1",
     "joi": "^14.3.1",

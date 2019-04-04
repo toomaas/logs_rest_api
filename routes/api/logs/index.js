@@ -46,13 +46,15 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
         if (req.query.created_at_gte || req.query.created_at_lte) {
             // these are the formats allowed. dates will be parsed based on the specified formats. 
             // If a date with a wrong format is sent, an error will ocurr from the elasticsearch database
-            let created_at = { "format": "yyyy-MM-dd" }
+            let created_at = { "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ss" }
             if (req.query.created_at_gte) created_at['gte'] = `${req.query.created_at_gte}`
             if (req.query.created_at_lte) created_at['lte'] = `${req.query.created_at_lte}`
             // the "crated_at" field is the date that the log occured (it is not the date that the log was introduced in elasticsearch DB)
             argsBuilder = await [...argsBuilder, { "range": { "created_at": created_at } }]
         }
     }
+  
+    //console.log(ipInfo,`Hey, you are browsing from ${ipInfo.city}, ${ipInfo.country}`)
     queryBuilder = { "bool": { "must": argsBuilder } }
     let conn = await elasticsearch_connection() // makes the connection to elaticsearch
     try {
@@ -72,7 +74,8 @@ router.route('/:source_system/:app_code').get(async (req, res) => {
             // row._source._id = row._id   // putting the elasticserach unique _id
             response = [...response, row._source]
         })
-        res.send({ 'total hits': elasticResponse.hits.total, 'data': response })
+        let ipInfo = req.ipInfo
+        res.send({'location': `Hey, you are browsing from ${ipInfo.city}, ${ipInfo.country}`, 'total hits': elasticResponse.hits.total, 'data': response })
     } catch (error) {
         let jsn = JSON.parse(error.response)
         //sends a 400 status code response with the details of the error, wich originated from elasticsearch
@@ -94,7 +97,8 @@ router.route('/').post(async (req, res) => {
             call_stack: Joi.string().allow('').required(),
             created_by: Joi.string().required(),
             created_at: Joi.date().format('YYYY-MM-DD HH:mm:ss').raw().required()   //uses the moment.js dates format                                                
-        }));
+        }))
+
         let data = req.body // request body
         // let url = 'http://10.11.112.38:5000'    // logstash url
         let url = 'http://logstashcustom-log-node.apps.amsint.com'    // logstash url
@@ -108,6 +112,7 @@ router.route('/').post(async (req, res) => {
         // will validate the array of json logs with the joi schema.
         // allowUnknown:false doesnt allow the object to contain unknown keys
         let joiValidatedResult = await Joi.validate(data, schema, { allowUnknown: false })   // joiValidatedResult contains the validated original array of objects (if the validation went ok).
+        console.log(joiValidatedResult)
         let result = await axios.post(url, joiValidatedResult, config).catch(error => {throw {name:"Error with the logstash endpoint",details:error.message}})
         //if the post to logstash went ok, then will return an 'ok message' 
         res.send({ result: result.data })

@@ -2,6 +2,7 @@ const express = require('express')
 const app = express() // define app using express
 const bodyParser = require('body-parser')
 const pretty = require('express-prettify')
+const expressip = require('express-ip')
 const process = require('process')
 const cors = require('cors')
 const graphQLHttp = require("express-graphql")
@@ -17,6 +18,7 @@ const schema = graphql.buildSchema(schemaTypes);
 app.use(bodyParser.urlencoded({ parameterLimit: 100000, limit: '40mb', extended: true }))
 app.use(bodyParser.json({ limit: '40mb', extended: true }))
 app.use(pretty({ query: 'pretty' })) // in the query string use "pretty" to pretty print json
+app.use(expressip().getIpInfoMiddleware)
 app.use(cors())
 //handle unexpected errors and sends the error to the client
 app.use(function (error, req, res, next) {
